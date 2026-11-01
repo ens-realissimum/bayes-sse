@@ -1,59 +1,62 @@
-# state-space-estimation
+# BayesSSE
+
+**Bayesian State-Space Estimation**
+
+## Overview
+
+`BayesSSE` is a Python library for Bayesian recursive estimation/filtration in stochastic state-space models. It recursively estimates hidden states of dynamical systems from noisy observations while accounting for process noise, observation noise, and known exogenous inputs, such as control inputs.
 
 ## Installation
 
-This project uses `pyproject.toml` for modern Python packaging. Below are the common installation methods:
+This project uses `pyproject.toml` for Python packaging. The PyPI distribution is `bayes-sse`, and the Python import package is `bayes_sse`.
 
-### Quick Reference
+### Running Simulations
+
+The package installs the `bayes-sse simulate` command. Plotting options such as `--draw` and `--save-plots` require the `simulations` extra.
+
+Run a simulation without opening plots:
+
+```bash
+bayes-sse simulate gamma-process-gaussian-observation --runs 10 --points 50 --filter pf
+```
+
+where `gamma-process-gaussian-observation` is the simulation scenario to run.
+
+Open live matplotlib windows:
+
+```bash
+bayes-sse simulate gamma-process-gaussian-observation --runs 10 --points 50 --filter cdkf --draw
+```
+
+`--draw` keeps Python alive until you close the plot windows.
+
+To keep editable plot windows open and still get your shell prompt back, run the simulation as a background job:
+
+```bash
+bayes-sse simulate gamma-process-gaussian-observation --runs 200 --points 200 --filter ukf --draw &
+```
+
+Then run another filter while the first plot windows stay open:
+
+```bash
+bayes-sse simulate gamma-process-gaussian-observation --runs 200 --points 200 --filter ckf --draw &
+```
+
+For non-interactive reports, save plots as PNG files instead:
+
+```bash
+bayes-sse simulate gamma-process-gaussian-observation --runs 10 --points 50 --filter pf --save-plots plots
+```
+
+## Quick Reference
 
 | Use Case | Command |
 |----------|---------|
 | **Basic install** | `pip install .` |
 | **Editable (dev)** | `pip install -e .` |
+| **With simulations** | `pip install -e ".[simulations]"` |
 | **With dev tools** | `pip install -e ".[dev]"` |
-| **With kinematics** | `pip install -e ".[kinematics]"` |
-| **Everything** | `pip install -e ".[dev,kinematics,docs]"` |
-| **From GitHub** | `pip install git+https://github.com/yourusername/state-space-estimation.git` |
-| **Upgrade** | `pip install --upgrade state-space-estimation` |
-| **Uninstall** | `pip uninstall state-space-estimation` |
+| **From GitHub** | `pip install git+https://github.com/ens-realissimum/bayes-sse.git` |
+| **Upgrade** | `pip install --upgrade bayes-sse` |
+| **Uninstall** | `pip uninstall bayes-sse` |
 
-### Installation Modes Explained
-
-**Basic Install** (`pip install .`)
-- Installs the package in standard mode
-- Good for testing before publishing
-- Changes to code require reinstallation
-
-**Editable Mode** (`pip install -e .`)
-- Installs in development mode
-- Changes to your code are immediately reflected
-- No need to reinstall after editing
-- Recommended for active development
-
-**With Optional Dependencies**
-- `[dev]` - Development tools (pytest, black, flake8, mypy, isort)
-- `[kinematics]` - Kinematics support (numpy-quaternion)
-- `[docs]` - Documentation tools (sphinx, sphinx-rtd-theme)
-- Combine multiple extras: `pip install -e ".[dev,kinematics]"`
-
-### Development Setup
-
-For contributing to this project:
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/state-space-estimation.git
-cd state-space-estimation
-
-# Install in editable mode with all development tools
-pip install -e ".[dev,kinematics,docs]"
-```
-
-### Project Structure
-
-The project is organized as follows:
-- `bayesian_framework/` - Core Bayesian filtering framework
-- `kinematics/` - Kinematics and motion models
-- `sensors/` - Sensor models (IMU, etc.)
-- `state_space_models/` - State-space model implementations
-- `utils/` - Utility functions for matrices, plotting, statistics

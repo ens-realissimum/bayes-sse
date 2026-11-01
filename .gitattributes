@@ -1,0 +1,12 @@
+* text=auto eol=crlf
+
+# Binary files should never be line-ending converted.
+*.gif binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.pyc binary
+*.whl binary
+*.zip binary

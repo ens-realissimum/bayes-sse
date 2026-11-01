@@ -4,7 +4,9 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from bayesian_framework.inference.stochastic_models.stochastic_processes import WienerProcessValueProvider
+from bayes_sse.inference.stochastic_models.stochastic_processes import (
+    WienerProcessValueProvider,
+)
 
 
 class AngularVelocityProvider(ABC):
@@ -24,7 +26,9 @@ class WienerModelAngularVelocityProvider(AngularVelocityProvider):
     Angular velocity for each axis (in 3D space) are independent.
     """
 
-    def __init__(self, initial_angular_velocity: np.ndarray, delta: float, dt: float, n: int):
+    def __init__(
+        self, initial_angular_velocity: np.ndarray, delta: float, dt: float, n: int
+    ):
         """
         Initialize instance of WienerAccelerationModelProvider
         :param initial_angular_velocity: initial angular velocity
@@ -32,7 +36,9 @@ class WienerModelAngularVelocityProvider(AngularVelocityProvider):
         :param dt: float, The time step.
         :param n: int, The number of steps to take.
         """
-        self._values_provider = WienerProcessValueProvider(initial_angular_velocity, delta, dt, n)
+        self._values_provider = WienerProcessValueProvider(
+            initial_angular_velocity, delta, dt, n
+        )
 
     def eval(self, k: int) -> np.ndarray:
         """

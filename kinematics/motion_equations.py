@@ -6,11 +6,17 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 from kinematics.models import KinematicState
-from utils.matrix_utils import vect_to_quaternion
-from utils.quaternion_utils import Quaternion, from_float_array, as_float_array, rotate_vectors
+from bayes_sse._utils.matrix_utils import vect_to_quaternion
+from bayes_sse._utils.quaternion_utils import (
+    from_float_array,
+    as_float_array,
+    rotate_vectors,
+)
 
 
-def uniform_acceleration_motion_equation(x: np.ndarray, acceleration: np.ndarray) -> np.ndarray:
+def uniform_acceleration_motion_equation(
+    x: np.ndarray, acceleration: np.ndarray
+) -> np.ndarray:
     """
     Equation of motion (differential equation) with constant acceleration and without angular motion.
     NB: All vectors must be in the same frame.
@@ -26,7 +32,9 @@ def uniform_acceleration_motion_equation(x: np.ndarray, acceleration: np.ndarray
     return d_x
 
 
-def uniform_angular_motion_equation(quaternion: np.ndarray, angular_velocity: np.ndarray) -> np.ndarray:
+def uniform_angular_motion_equation(
+    quaternion: np.ndarray, angular_velocity: np.ndarray
+) -> np.ndarray:
     """
     Equation of uniform angular motion (with constant angular velocity).
     :param quaternion: quaternion that represent orientation of body frame according to inertial frame.
@@ -38,11 +46,12 @@ def uniform_angular_motion_equation(quaternion: np.ndarray, angular_velocity: np
 
 
 def solve_kinematic_motion_equation(
-        time_span: Tuple[int, int],
-        state: KinematicState,
-        acceleration: np.ndarray,
-        gravity_acceleration: np.ndarray,
-        angular_velocity: np.ndarray) -> KinematicState:
+    time_span: Tuple[int, int],
+    state: KinematicState,
+    acceleration: np.ndarray,
+    gravity_acceleration: np.ndarray,
+    angular_velocity: np.ndarray,
+) -> KinematicState:
     """
     Solve kinematic differential equation of motion.
     Describe motion in phase space that represent spatial position and angular position of body.
@@ -66,7 +75,19 @@ def solve_kinematic_motion_equation(
     """
     acc = rotate_vectors(state.quaternion, acceleration) + gravity_acceleration
     x0 = np.hstack((state.position, state.velocity))
-    x_new = solve_ivp(lambda t, x: uniform_acceleration_motion_equation(x, acc), time_span, x0, method="RK45")
-    q_new = solve_ivp(lambda t, q: uniform_angular_motion_equation(q, angular_velocity), time_span, state.quaternion.components, method="RK45")
+    x_new = solve_ivp(
+        lambda _, x: uniform_acceleration_motion_equation(x, acc),
+        time_span,
+        x0,
+        method="RK45",
+    )
+    q_new = solve_ivp(
+        lambda _, q: uniform_angular_motion_equation(q, angular_velocity),
+        time_span,
+        state.quaternion.components,
+        method="RK45",
+    )
 
-    return KinematicState(x_new.y[:3, -1], x_new.y[3:, -1], from_float_array(q_new.y[:, -1]).normalized)
+    return KinematicState(
+        x_new.y[:3, -1], x_new.y[3:, -1], from_float_array(q_new.y[:, -1]).normalized
+    )

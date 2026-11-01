@@ -79,9 +79,6 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-.python-version
-
 # pipenv
 Pipfile.lock
 
@@ -97,7 +94,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.venv/
 env/
 venv/
 ENV/

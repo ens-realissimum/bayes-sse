@@ -1,0 +1,1 @@
+"""Discoverable BayesSSE simulations scenarios."""

@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Iterable
 
 import numpy as np
-from utils.quaternion_utils import Quaternion
+from bayes_sse._utils.quaternion_utils import Quaternion
 
 
 class KinematicState:
@@ -13,7 +13,12 @@ class KinematicState:
         Quaternion that represent angular position according to inertial frame.
     """
 
-    def __init__(self, position: Iterable[float], velocity: Iterable[float], quaternion: Quaternion):
+    def __init__(
+        self,
+        position: Iterable[float],
+        velocity: Iterable[float],
+        quaternion: Quaternion,
+    ):
         """
         Creates new instance of KinematicState.
         :param position: position vector (cartesian coordinates), [km].
@@ -25,9 +30,11 @@ class KinematicState:
         self._quaternion = deepcopy(quaternion)
 
     def __str__(self):
-        return f"Position: x={self._position[0]} km, y={self._position[1]} km, z={self._position[2]} km; " \
-               f"Velocity: vx={self._velocity[0]} km/sec, vy={self._velocity[1]} km/sec, vz={self._velocity[2]} km/sec; " \
-               f"Quaternion: qw={self._quaternion.w}, qx={self._quaternion.x}, qy={self._quaternion.y}, qz={self._quaternion.z}"
+        return (
+            f"Position: x={self._position[0]} km, y={self._position[1]} km, z={self._position[2]} km; "
+            f"Velocity: vx={self._velocity[0]} km/sec, vy={self._velocity[1]} km/sec, vz={self._velocity[2]} km/sec; "
+            f"Quaternion: qw={self._quaternion.w}, qx={self._quaternion.x}, qy={self._quaternion.y}, qz={self._quaternion.z}"
+        )
 
     @property
     def position(self) -> np.ndarray:
