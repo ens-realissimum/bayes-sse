@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any, Tuple, Union, cast
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import Covariance, gamma, multivariate_normal
 
-import bayes_sse.core.covariance_utils as cov_utils
 import bayes_sse._utils.matrix_utils as matrix_utils
+import bayes_sse.core.covariance_utils as cov_utils
+
 from .covariance_type import CovarianceType
 from .noise_type import NoiseType
 
@@ -295,6 +296,8 @@ class ComboGaussian(StochasticModel):
         return np.atleast_1d(
             multivariate_normal.pdf(
                 samples.T, mean=self._mean, cov=cast(Any, self._covariance_full)
+            )
+        )
 
     def update(self, **kwargs) -> None:
         shift = 0
@@ -364,7 +367,9 @@ class GaussianMixture(StochasticModel):
         _, self._dimension = self._mean.shape
 
         if weights is None:
-            self._weights: FloatArray = np.ones(mixture_size, dtype=np.float64) / mixture_size
+            self._weights: FloatArray = (
+                np.ones(mixture_size, dtype=np.float64) / mixture_size
+            )
         else:
             weights_arr = np.asarray(weights, dtype=np.float64)
             self._weights = weights_arr / weights_arr.sum()

@@ -1,4 +1,4 @@
-* text=auto eol=crlf
+* text=auto eol=lf
 
 # Binary files should never be line-ending converted.
 *.gif binary
