@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Any, Tuple, Union, cast
+from typing import Any, cast
 
 import numpy as np
-from numpy.typing import NDArray
-from scipy.stats import Covariance, gamma, multivariate_normal
+from scipy.stats import gamma, multivariate_normal
 
-import bayes_sse._utils.matrix_utils as matrix_utils
 import bayes_sse.core.covariance_utils as cov_utils
+from bayes_sse._utils import matrix_utils
 
 from .covariance_type import CovarianceType
 from .noise_type import NoiseType
@@ -92,7 +91,6 @@ class StochasticModel(ABC):
         Synchronizes any derived or dependent internal state after model parameters
         have changed.
         """
-        pass
 
     @property
     def n_components(self) -> int:
@@ -102,11 +100,13 @@ class StochasticModel(ABC):
     def weights(self) -> np.ndarray:
         raise RuntimeError("weights aren't available.")
 
+
+class Gamma(StochasticModel):
     def __init__(
         self,
         *,
-        shape: int | float | Sequence,
-        scale: int | float | Sequence,
+        shape: float | Sequence,
+        scale: float | Sequence,
     ):
         is_shape_list = isinstance(shape, Sequence)
         is_scale_list = isinstance(scale, Sequence)
@@ -430,7 +430,7 @@ class GaussianMixture(StochasticModel):
 
     def probability(
         self, samples: np.ndarray, evidence_weights: np.ndarray = np.ndarray([])
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculates any of the related (through Bayes rule) probabilities of a Gaussian Mixture Model and
         a given data set (samples). Probabilities are:
