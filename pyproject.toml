@@ -29,7 +29,7 @@ simulations = [
 ]
 dev = [
   "build",
-  "pytest==9.0.2"
+  "pytest==9.0.3"
 ]
 
 [tool.setuptools.packages.find]
