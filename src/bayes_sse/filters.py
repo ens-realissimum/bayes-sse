@@ -169,7 +169,7 @@ class PdfApproximationFilter[ApproximationT](ABC):
         ...
 
 
-class Kf(LocalApproximationKalmanFilter):
+class KF(LocalApproximationKalmanFilter):
     """
     KF - Kalman Filter (linear).
 
@@ -312,7 +312,7 @@ class Kf(LocalApproximationKalmanFilter):
         return updated_state_mean, updated_state_covariance, filter_state
 
 
-class Ekf(LocalApproximationKalmanFilter):
+class EKF(LocalApproximationKalmanFilter):
     """
     EKF - Extended Kalman Filter.
 
@@ -490,7 +490,7 @@ class UnscentedTransformFilter(LocalApproximationKalmanFilter):
     ) -> Float64Matrix: ...
 
 
-class Ukf(UnscentedTransformFilter):
+class UKF(UnscentedTransformFilter):
     """
     UKF - Unscented Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -709,7 +709,7 @@ class Ukf(UnscentedTransformFilter):
         )
 
 
-class SrUkf(Ukf):
+class SRUKF(UKF):
     """
     SRUKF - Square Root Unscented Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -867,7 +867,7 @@ class CentralDiffTransformFilter(LocalApproximationKalmanFilter):
     ) -> Float64Matrix: ...
 
 
-class Cdkf(CentralDiffTransformFilter):
+class CDKF(CentralDiffTransformFilter):
     """
     CDKF - Central Difference Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -1111,7 +1111,7 @@ class Cdkf(CentralDiffTransformFilter):
         )
 
 
-class SrCdkf(Cdkf):
+class SRCDKF(CDKF):
     """
     SR CDKF - Square Root Central Difference Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -1220,7 +1220,7 @@ class CubatureTransformFilter(LocalApproximationKalmanFilter):
     ) -> Float64Matrix: ...
 
 
-class Ckf(CubatureTransformFilter):
+class CKF(CubatureTransformFilter):
     """
     CKF - Cubature Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -1423,7 +1423,7 @@ class Ckf(CubatureTransformFilter):
         return m_utils.svd_sqrt(state_covariance) * np.sqrt(state_dim)
 
 
-class SrCkf(Ckf):
+class SRCKF(CKF):
     """
     SR CKF - Square Root Cubature Kalman Filter. Sigma-Point Kalman Filter variant.
 
@@ -1524,7 +1524,7 @@ class SrCkf(Ckf):
         return state_covariance * np.sqrt(state_dim)
 
 
-class HdLkf(LocalApproximationKalmanFilter, ABC):
+class HDLKF(LocalApproximationKalmanFilter, ABC):
     """
     HDLKF - High Degree 'Local Approximation' Kalman Filter.
     Base class that encapsulate filtration process for 'Local approximation' Kalman filters,
@@ -1653,7 +1653,7 @@ class HdLkf(LocalApproximationKalmanFilter, ABC):
     ) -> tuple[IntegrationPoints, IntegrationWeights]: ...
 
 
-class FdCkf(HdLkf):
+class FDCKF(HDLKF):
     """
     FDCKF - Fifth Degree Cubature Kalman Filter. Fifth degree Spherical Simplex-Radial Cubature Kalman Filter.
     Sigma Point Kalman Filter variant.
@@ -1684,7 +1684,7 @@ class FdCkf(HdLkf):
         return num_computations.eval_fifth_degree_cubature_rule(model.state_dim)
 
 
-class Cqkf(HdLkf):
+class CQKF(HDLKF):
     """
     CQKF - Cubature Quadrature Kalman Filter (some kind of High-degree Cubature Kalman Filter).
     Sigma Point Kalman Filter variant.
@@ -1724,7 +1724,7 @@ class Cqkf(HdLkf):
         )
 
 
-class Ghqf(HdLkf):
+class GHQF(HDLKF):
     """
     GHQF - Gauss-Hermite Quadrature Filter. Sigma Point Kalman Filter variant.
     Estimates state and state covariance for nonlinear systems with
@@ -1768,7 +1768,7 @@ class Ghqf(HdLkf):
 
 
 #  todo: not completed yet. there is a bug in points & weights calculation. fix it
-class Sghqf(HdLkf):
+class SGHQF(HDLKF):
     """
     SGHQF. Sparse Gauss-Hermite quadrature filter is proposed using a sparse-grid method for multidimensional
     numerical integration in the Bayesian estimation framework.
@@ -2084,7 +2084,7 @@ def _inverse_cdf_indices(
 type ParticleFilterResult = PdfApproximationFilterResult[WeightedParticleSet]
 
 
-class Bpf(PdfApproximationFilter[WeightedParticleSet]):
+class BPF(PdfApproximationFilter[WeightedParticleSet]):
     """
     Generic Bootstrap Particle filter / Particle Filter.
     This filter is also known as the 'Bootstrap Particle Filter' or the 'Condensation Algorithm'.
@@ -2218,7 +2218,7 @@ class Bpf(PdfApproximationFilter[WeightedParticleSet]):
 type GaussianSumParticleFilterResult = PdfApproximationFilterResult[GaussianMixture]
 
 
-class Gspf(PdfApproximationFilter[GaussianMixture]):
+class GSPF(PdfApproximationFilter[GaussianMixture]):
     """
     Gaussian Sum Particle Filter.
     The filter approximate the filtering and predictive distributions

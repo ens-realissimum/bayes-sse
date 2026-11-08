@@ -141,7 +141,7 @@ def run(config: RunConfig | None = None) -> None:
                 )
         elif filter_type is BayesianFilterType.pf:
             resample_strategy = bf.Resampler.resolve(bf.ResamplingMethod.residual)
-            pf = bf.Bpf(ess_threshold_ratio=0.1, resampler=resample_strategy)
+            pf = bf.BPF(ess_threshold_ratio=0.1, resampler=resample_strategy)
             particles = np.atleast_2d(
                 multivariate_normal.rvs(x_est[:, 0], size=config.n_particles)
             )
@@ -174,7 +174,7 @@ def run(config: RunConfig | None = None) -> None:
             gmm_inference_model = inference_model.set_state_noise(gm_state_noise)
 
             resample_strategy = bf.Resampler.resolve(bf.ResamplingMethod.residual)
-            gspf = bf.Gspf(config.n_particles, resampler=resample_strategy)
+            gspf = bf.GSPF(config.n_particles, resampler=resample_strategy)
             gmi = bf.init_gmi(
                 x_est[:, 0],
                 gmm_inference_model.state_dim,
@@ -327,29 +327,29 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _build_sigma_or_linear_filter(filter_type: BayesianFilterType):
     if filter_type is BayesianFilterType.ukf:
-        return bf.Ukf(alpha=1, beta=2, kappa=0)
+        return bf.UKF(alpha=1, beta=2, kappa=0)
     if filter_type is BayesianFilterType.srukf:
-        return bf.SrUkf(alpha=1, beta=2, kappa=0)
+        return bf.SRUKF(alpha=1, beta=2, kappa=0)
     if filter_type is BayesianFilterType.cdkf:
-        return bf.Cdkf(scale_factor=np.sqrt(3))
+        return bf.CDKF(scale_factor=np.sqrt(3))
     if filter_type is BayesianFilterType.srcdkf:
-        return bf.SrCdkf(scale_factor=np.sqrt(3))
+        return bf.SRCDKF(scale_factor=np.sqrt(3))
     if filter_type is BayesianFilterType.ckf:
-        return bf.Ckf()
+        return bf.CKF()
     if filter_type is BayesianFilterType.srckf:
-        return bf.SrCkf()
+        return bf.SRCKF()
     if filter_type is BayesianFilterType.fdckf:
-        return bf.FdCkf()
+        return bf.FDCKF()
     if filter_type is BayesianFilterType.cqkf:
-        return bf.Cqkf(order=9)
+        return bf.CQKF(order=9)
     if filter_type is BayesianFilterType.ghqf:
-        return bf.Ghqf(order=22)
+        return bf.GHQF(order=22)
     if filter_type is BayesianFilterType.sghqf:
-        return bf.Sghqf(order=11, manner=3)
+        return bf.SGHQF(order=11, manner=3)
     if filter_type is BayesianFilterType.kf:
-        return bf.Kf()
+        return bf.KF()
     if filter_type is BayesianFilterType.ekf:
-        return bf.Ekf()
+        return bf.EKF()
 
     raise ValueError(f"Not supported filter type: {filter_type.name}")
 
