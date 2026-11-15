@@ -4,12 +4,17 @@ import numpy as np
 
 from bayes_sse.inference.stochastic_models.covariance_type import is_sqrt_like
 from bayes_sse.inference.stochastic_models.stochastic_models import StochasticModel
+from bayes_sse.typing import CovarianceMatrix
 
 
 class CovarianceMatrixAdaptation(ABC):
-
     @abstractmethod
-    def reconcile(self, noise: StochasticModel, cov: np.ndarray, **kwargs) -> np.ndarray:
+    def adapt(
+        self,
+        noise: StochasticModel,
+        cov: CovarianceMatrix,
+        **kwargs,
+    ) -> CovarianceMatrix:
         """
         Apply covariance adaptation method to covariance matrix of stochastic process (ie to noise) based on
         covariance matrix (cov) of a stochastic vector (from variational space).
@@ -30,21 +35,26 @@ class AnnealAdaptation(CovarianceMatrixAdaptation):
         self._annealing_factor = annealing_factor
         self._minimum_allowed_variance = minimum_allowed_variance
 
-    def reconcile(self, noise: StochasticModel, cov: np.ndarray, **kwargs) -> np.ndarray:
+    def reconcile(
+        self, noise: StochasticModel, cov: np.ndarray, **kwargs
+    ) -> np.ndarray:
         if is_sqrt_like(noise.covariance_type):
             return np.diag(
                 -np.diag(cov)
                 + np.sqrt(
                     np.maximum(
                         self._annealing_factor * (np.diag(noise.covariance) ** 2),
-                        self._minimum_allowed_variance
+                        self._minimum_allowed_variance,
                     )
                     + np.diag(cov) ** 2
                 )
             )
 
-        return np.diag(np.maximum(
-            self._annealing_factor * np.diag(noise.covariance), self._minimum_allowed_variance)
+        return np.diag(
+            np.maximum(
+                self._annealing_factor * np.diag(noise.covariance),
+                self._minimum_allowed_variance,
+            )
         )
 
 
@@ -56,7 +66,9 @@ class LambdaDecayAdaptation(CovarianceMatrixAdaptation):
     def __init__(self, lambda_factor: float):
         self._lambda_factor = lambda_factor
 
-    def reconcile(self, noise: StochasticModel, cov: np.ndarray, **kwargs) -> np.ndarray:
+    def reconcile(
+        self, noise: StochasticModel, cov: np.ndarray, **kwargs
+    ) -> np.ndarray:
         if is_sqrt_like(noise.covariance_type):
             return noise.covariance
 
@@ -72,7 +84,9 @@ class RobbinsMonroAdaptation(CovarianceMatrixAdaptation):
         self._nu_initial_inv = nu_initial_inv  # equal to 1 / nu_initial
         self._nu_final_inv = nu_final_inv  # equal to 1 / nu_final
 
-    def reconcile(self, noise: StochasticModel, cov: np.ndarray, **kwargs) -> np.ndarray:
+    def reconcile(
+        self, noise: StochasticModel, cov: np.ndarray, **kwargs
+    ) -> np.ndarray:
         nu = 1 / self._nu_initial_inv
 
         kalman_gain = kwargs["kalman_gain"]
@@ -84,7 +98,8 @@ class RobbinsMonroAdaptation(CovarianceMatrixAdaptation):
             rec_cov = np.diag(
                 -np.diag(cov)
                 + np.sqrt(
-                    (1 - nu) * (noise.covariance ** 2) + nu * np.diag(kgi)
+                    (1 - nu) * (noise.covariance**2)
+                    + nu * np.diag(kgi)
                     + np.diag(cov) ** 2
                 )
             )

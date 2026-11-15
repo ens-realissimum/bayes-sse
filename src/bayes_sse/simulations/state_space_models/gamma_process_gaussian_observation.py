@@ -1,13 +1,25 @@
-from typing import NoReturn, Optional
+from typing import overload
 
 import numpy as np
 
 import bayes_sse.inference.stochastic_models.stochastic_models as sm
+from bayes_sse.core.covariance_adapdation import CovarianceMatrixAdaptation
+from bayes_sse.core.linearization_type import LinearizationType
 from bayes_sse.inference.gssm import StateSpaceModel
 from bayes_sse.inference.stochastic_models.covariance_type import CovarianceType
 from bayes_sse.inference.stochastic_models.noise_type import NoiseType
-from bayes_sse.core.covariance_adapdation import CovarianceMatrixAdaptation
-from bayes_sse.core.linearization_type import LinearizationType
+
+from ...typing import (
+    ControlVector,
+    Float64FlatVector,
+    JacobianMatrix,
+    NoiseBatch,
+    NoiseVector,
+    ObservationBatch,
+    ObservationVector,
+    StateBatch,
+    StateVector,
+)
 
 
 class GammaProcessWithGaussianObservationGssm(StateSpaceModel):
@@ -18,16 +30,23 @@ class GammaProcessWithGaussianObservationGssm(StateSpaceModel):
     State space function is non-linear.
     """
 
-    def __init__(self, omega: float, phi: float, state_noise: sm.StochasticModel,
-                 observation_noise: sm.StochasticModel):
+    def __init__(
+        self,
+        omega: float,
+        phi: float,
+        state_noise: sm.StochasticModel,
+        observation_noise: sm.StochasticModel,
+    ):
         super().__init__(state_noise, observation_noise)
 
         self._omega = omega
         self._phi = phi
 
     def __str__(self):
-        return f"Gamma distributed state vector (dim: {self.state_dim}) and " \
-               f"observation (dim: {self.observation_dim}) with Gaussian noise"
+        return (
+            f"Gamma distributed state vector (dim: {self.state_dim}) and "
+            f"observation (dim: {self.observation_dim}) with Gaussian noise"
+        )
 
     @property
     def type(self) -> str:
@@ -46,32 +65,63 @@ class GammaProcessWithGaussianObservationGssm(StateSpaceModel):
         return 1
 
     @property
-    def control_state_dim(self) -> Optional[int]:
+    def control_state_dim(self) -> int | None:
         return 1
 
     @property
-    def control_observation_dim(self) -> Optional[int]:
+    def control_observation_dim(self) -> int | None:
         return 1
 
+    @overload
     def transition_func(
-            self,
-            state: np.ndarray,
-            state_noise: Optional[np.ndarray] = None,
-            control_vect: Optional[np.ndarray] = None
-    ) -> np.ndarray:
-        u = 1 if control_vect is None else control_vect
-        v = 0 if state_noise is None else state_noise
+        self,
+        state: StateVector,
+        state_noise: NoiseVector | None = None,
+        transition_input: ControlVector = None,
+    ) -> StateVector: ...
 
+    @overload
+    def transition_func(
+        self,
+        state: StateBatch,
+        state_noise: NoiseBatch | None = None,
+        transition_input: ControlVector = None,
+    ) -> StateBatch: ...
+
+    def transition_func(
+        self,
+        state: StateBatch,
+        state_noise: NoiseBatch | None = None,
+        transition_input: ControlVector = None,
+    ) -> StateBatch:
+        u = 1 if transition_input is None else transition_input
+        v = 0 if state_noise is None else state_noise
         return 1 + np.sin(self._omega * np.pi * u) + self._phi * state + v
 
+    @overload
     def observation_func(
-            self,
-            state: np.ndarray,
-            observation_noise: Optional[np.ndarray] = None,
-            control_vect: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+        self,
+        state: StateVector,
+        observation_noise: NoiseVector | None = None,
+        observation_input: ControlVector = None,
+    ) -> ObservationVector: ...
+
+    @overload
+    def observation_func(
+        self,
+        state: StateBatch,
+        observation_noise: NoiseBatch | None = None,
+        observation_input: ControlVector = None,
+    ) -> ObservationBatch: ...
+
+    def observation_func(
+        self,
+        state: StateBatch,
+        observation_noise: NoiseBatch | None = None,
+        observation_input: ControlVector = None,
+    ) -> ObservationBatch:
         x = np.atleast_2d(state)
-        u = 0 if control_vect is None else control_vect
+        u = 0 if observation_input is None else observation_input
 
         z = self._phi * np.power(x, 2) + u
 
@@ -81,49 +131,64 @@ class GammaProcessWithGaussianObservationGssm(StateSpaceModel):
         return z
 
     def prior(
-            self,
-            next_state: np.ndarray,
-            state: np.ndarray,
-            control_x: Optional[np.ndarray] = None
-    ) -> np.ndarray:
-        x_deviation = next_state - self.transition_func(state, None, control_x)
+        self,
+        next_state: StateBatch,
+        state: StateBatch,
+        transition_input: ControlVector = None,
+    ) -> Float64FlatVector:
+        x_deviation = next_state - self.transition_func(state, None, transition_input)
         return self.state_noise.likelihood(x_deviation)
 
     def likelihood(
-            self,
-            observation: np.ndarray,
-            state: np.ndarray,
-            control_z: Optional[np.ndarray] = None
-    ) -> np.matrix:
-        z_deviation = observation - self.observation_func(state, None, control_z)
-        return np.matrix(self.observation_noise.likelihood(z_deviation))
+        self,
+        observation: ObservationBatch,
+        state: StateBatch,
+        observation_input: ControlVector = None,
+    ) -> Float64FlatVector:
+        z_deviation = observation - self.observation_func(
+            state, None, observation_input
+        )
+        return np.asarray(self.observation_noise.likelihood(z_deviation))
 
     def linearize(
-            self,
-            lin_type: LinearizationType,
-            state: Optional[np.ndarray],
-            state_noise: Optional[np.ndarray],
-            observation_noise: Optional[np.ndarray],
-            control_x: Optional[np.ndarray],
-            control_z: Optional[np.ndarray]
-    ) -> np.ndarray:
-        if lin_type == LinearizationType.F:
-            return np.atleast_2d([self._phi])
-        elif lin_type in (LinearizationType.B, LinearizationType.D):
-            return np.atleast_2d([])
-        elif lin_type == LinearizationType.C:
-            return np.atleast_2d([2 * self._phi * state if control_z <= 30 else self._phi])
-        elif lin_type in (LinearizationType.G, LinearizationType.H):
-            return np.atleast_2d([1])
-        elif lin_type == LinearizationType.JFW:
-            return np.atleast_2d([np.cos(self._omega * np.pi * control_x) * np.pi * control_x, state])
-        elif lin_type == LinearizationType.JHW:
-            jhw = [0, state ** 2] if control_z <= 30 else [0, state]
-            return np.atleast_2d(jhw)
-        else:
-            raise Exception(f"Unknown value of lin_type: {lin_type.name}")
+        self,
+        lin_type: LinearizationType,
+        state: StateVector | None,
+        *,
+        state_noise: NoiseVector | None = None,
+        observation_noise: NoiseVector | None = None,
+        control_x: ControlVector = None,
+        control_z: ControlVector = None,
+    ) -> JacobianMatrix:
+        if lin_type is LinearizationType.F:
+            return np.array([[self._phi]], dtype=np.float64)
 
-    def set_params(self, **kwargs) -> NoReturn:
+        if lin_type in (LinearizationType.D, LinearizationType.G, LinearizationType.H):
+            return np.ones((1, 1), dtype=np.float64)
+
+        if lin_type in (LinearizationType.B, LinearizationType.JFW):
+            u = 1.0 if control_x is None else control_x.item()
+            slope = np.pi * np.cos(self._omega * np.pi * u)
+
+            if lin_type is LinearizationType.B:
+                return np.array([[self._omega * slope]], dtype=np.float64)
+
+            if state is None:
+                raise ValueError("JFW requires a state.")
+            return np.array([[u * slope, state.item()]], dtype=np.float64)
+
+        if lin_type in (LinearizationType.C, LinearizationType.JHW):
+            if state is None:
+                raise ValueError(f"{lin_type.name} requires a state.")
+
+            x = state.item()
+            if lin_type is LinearizationType.C:
+                return np.array([[2 * self._phi * x]], dtype=np.float64)
+            return np.array([[0.0, x**2]], dtype=np.float64)
+
+        raise ValueError(f"Unknown linearization type: {lin_type}")
+
+    def set_params(self, **kwargs) -> None:
         if "omega" in kwargs:
             self._omega = kwargs["omega"]
 
@@ -131,29 +196,31 @@ class GammaProcessWithGaussianObservationGssm(StateSpaceModel):
             self._phi = kwargs["phi"]
 
     def clone(
-            self,
-            state_noise: sm.StochasticModel,
-            observation_noise: sm.StochasticModel,
-            reconcile_strategy: CovarianceMatrixAdaptation
+        self,
+        state_noise: sm.StochasticModel,
+        observation_noise: sm.StochasticModel,
+        reconcile_strategy: CovarianceMatrixAdaptation | None,
     ) -> StateSpaceModel:
-        return GammaProcessWithGaussianObservationGssm(self._omega, self._phi, state_noise, observation_noise)
+        return GammaProcessWithGaussianObservationGssm(
+            self._omega, self._phi, state_noise, observation_noise
+        )
 
 
 def build(
-        omega: float,
-        phi: float,
-        shape: float,
-        scale: float,
-        n_mean: float,
-        n_cov: float,
-        n_cov_type: CovarianceType
+    omega: float,
+    phi: float,
+    shape: float,
+    scale: float,
+    n_mean: float,
+    n_cov: float,
+    n_cov_type: CovarianceType,
 ) -> GammaProcessWithGaussianObservationGssm:
     x_noise = sm.build_stochastic_process(NoiseType.gamma, shape=shape, scale=scale)
     z_noise = sm.build_stochastic_process(
         NoiseType.gaussian,
         mean=np.asarray(n_mean),
         covariance=np.atleast_2d(n_cov),
-        covariance_type=n_cov_type
+        covariance_type=n_cov_type,
     )
 
     return GammaProcessWithGaussianObservationGssm(omega, phi, x_noise, z_noise)
