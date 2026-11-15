@@ -44,3 +44,10 @@ type MixtureMeans = Float64Matrix
 type MixtureCovariances = Float64MatrixBatch
 type MixtureCovarianceFactors = Float64MatrixBatch
 type MixtureWeights = Float64FlatVector
+
+# State and observation equation linearization
+type JacobianMatrix = Float64Matrix
+# F = ∂f/∂x, G = ∂f/∂v
+type TransitionJacobians = tuple[JacobianMatrix, JacobianMatrix]
+# C = ∂h/∂x, H = ∂h/∂n
+type ObservationJacobians = tuple[JacobianMatrix, JacobianMatrix]
