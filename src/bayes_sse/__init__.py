@@ -1,5 +1,7 @@
 from .filters import (
+    EKF,
     KF,
+    UKF,
     KalmanFilterResult,
     KalmanFilterState,
     LocalApproximationKalmanFilter,
@@ -38,7 +40,9 @@ from .typing import (
 )
 
 __all__ = [
+    "EKF",
     "KF",
+    "UKF",
     "ControlVector",
     "CovarianceFactor",
     "CovarianceMatrix",
