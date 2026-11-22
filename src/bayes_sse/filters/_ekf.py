@@ -60,8 +60,8 @@ class EKF(LocalApproximationKalmanFilter):
             state,
             state_noise=model.state_noise.mean,
             observation_noise=model.observation_noise.mean,
-            control_x=transition_input,
-            control_z=observation_input,
+            transition_input=transition_input,
+            observation_input=observation_input,
         )
 
         predicted_state = model.transition_func(
@@ -76,8 +76,8 @@ class EKF(LocalApproximationKalmanFilter):
             predicted_state,
             state_noise=model.state_noise.mean,
             observation_noise=model.observation_noise.mean,
-            control_x=transition_input,
-            control_z=observation_input,
+            transition_input=transition_input,
+            observation_input=observation_input,
         )
 
         r = model.observation_noise.covariance
