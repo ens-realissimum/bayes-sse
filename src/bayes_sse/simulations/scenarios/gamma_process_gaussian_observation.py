@@ -131,10 +131,10 @@ def run(config: RunConfig | None = None) -> None:
                 x_cov_est = np.linalg.cholesky(x_cov_est)
 
             for k in range(1, config.data_points_count):
-                x_est[:, k], x_cov_est, _ = spkf.estimate(
-                    x_est[:, k - 1],
+                x_est[:, k : k + 1], x_cov_est, _ = spkf.estimate(
+                    x_est[:, k - 1 : k],
                     x_cov_est,
-                    z[:, k],
+                    z[:, k : k + 1],
                     inference_model,
                     u_x[k - 1],
                     u_z[k],
