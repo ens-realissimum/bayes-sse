@@ -64,12 +64,12 @@ class StateSpaceModel(ABC):
 
     @property
     @abstractmethod
-    def control_state_dim(self) -> int | None:
+    def transition_input_dim(self) -> int | None:
         return None
 
     @property
     @abstractmethod
-    def control_observation_dim(self) -> int | None:
+    def observation_input_dim(self) -> int | None:
         return None
 
     @property
@@ -180,8 +180,8 @@ class StateSpaceModel(ABC):
         *,
         state_noise: NoiseVector | None = None,
         observation_noise: NoiseVector | None = None,
-        control_x: ControlVector = None,
-        control_z: ControlVector = None,
+        transition_input: ControlVector = None,
+        observation_input: ControlVector = None,
     ) -> JacobianMatrix:
         """Compute the requested Jacobian at the supplied state and inputs."""
         ...
@@ -192,8 +192,8 @@ class StateSpaceModel(ABC):
         *,
         state_noise: NoiseVector | None = None,
         observation_noise: NoiseVector | None = None,
-        control_x: ControlVector = None,
-        control_z: ControlVector = None,
+        transition_input: ControlVector = None,
+        observation_input: ControlVector = None,
     ) -> TransitionJacobians:
         """Return F and G for the prediction step."""
         linearize_at_state = partial(
@@ -201,8 +201,8 @@ class StateSpaceModel(ABC):
             state=state,
             state_noise=state_noise,
             observation_noise=observation_noise,
-            control_x=control_x,
-            control_z=control_z,
+            transition_input=transition_input,
+            observation_input=observation_input,
         )
         return (
             linearize_at_state(LinearizationType.F),
@@ -215,8 +215,8 @@ class StateSpaceModel(ABC):
         *,
         state_noise: NoiseVector | None = None,
         observation_noise: NoiseVector | None = None,
-        control_x: ControlVector = None,
-        control_z: ControlVector = None,
+        transition_input: ControlVector = None,
+        observation_input: ControlVector = None,
     ) -> ObservationJacobians:
         """Return C and H for the measurement update."""
         linearize_at_state = partial(
@@ -224,8 +224,8 @@ class StateSpaceModel(ABC):
             state=state,
             state_noise=state_noise,
             observation_noise=observation_noise,
-            control_x=control_x,
-            control_z=control_z,
+            transition_input=transition_input,
+            observation_input=observation_input,
         )
         return (
             linearize_at_state(LinearizationType.C),
