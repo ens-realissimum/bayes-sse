@@ -56,7 +56,7 @@ class KF(LocalApproximationKalmanFilter):
         """
         # Time update (prediction)
         f, g = model.transition_jacobians(
-            state, state_noise=model.state_noise.mean, control_x=transition_input
+            state, state_noise=model.state_noise.mean, transition_input=transition_input
         )
 
         predicted_state = model.transition_func(
@@ -70,7 +70,7 @@ class KF(LocalApproximationKalmanFilter):
         c, h = model.observation_jacobians(
             predicted_state,
             observation_noise=model.observation_noise.mean,
-            control_z=observation_input,
+            observation_input=observation_input,
         )
 
         predicted_observation_covariance = (
