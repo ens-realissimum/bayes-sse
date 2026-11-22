@@ -8,7 +8,9 @@ from bayes_sse.typing import (
     CovarianceMatrix,
     Float64Matrix,
     Float64Vector,
+    ObservationBatch,
     ObservationVector,
+    StateBatch,
     StateVector,
 )
 
@@ -159,3 +161,44 @@ class PdfApproximationFilter[ApproximationT](ABC):
             updated distribution approximation.
         """
         ...
+
+
+class UnscentedTransformFilter(LocalApproximationKalmanFilter):
+    @abstractmethod
+    def predict_observation_covariance(
+        self,
+        model: StateSpaceModel,
+        weights: Float64Vector,
+        observation_deviations: ObservationBatch,
+    ) -> CovarianceMatrix: ...
+
+    @abstractmethod
+    def predict_state_covariance(
+        self,
+        weights: Float64Vector,
+        state_deviations: StateBatch,
+    ) -> CovarianceMatrix: ...
+
+    @abstractmethod
+    def correct_state_covariance(
+        self,
+        filter_gain: Float64Matrix,
+        predicted_state_covariance: CovarianceMatrix,
+        predicted_observation_covariance: CovarianceMatrix,
+        model: StateSpaceModel,
+    ) -> CovarianceMatrix: ...
+
+    @abstractmethod
+    def eval_filter_gain(
+        self,
+        cross_covariance: CovarianceMatrix,
+        predicted_observation_covariance: CovarianceMatrix,
+    ) -> Float64Matrix: ...
+
+    @abstractmethod
+    def eval_sigma_points_offset(
+        self,
+        augment_dim: int,
+        state_covariance: CovarianceMatrix,
+        model: StateSpaceModel,
+    ) -> Float64Matrix: ...
