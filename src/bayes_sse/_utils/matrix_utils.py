@@ -87,28 +87,6 @@ def ensure_positive_semi_definite(matrix: Float64Matrix) -> Float64Matrix:
     return matrix
 
 
-def put_matrices_into_zero_matrix_one_by_one(
-    dimension: int,
-    matrix_list: Iterable[Float64Matrix],
-) -> Float64Matrix:
-    result_shape = (dimension, dimension)
-    result_matrix = np.zeros(result_shape)
-
-    row_shift = 0
-    column_shift = 0
-
-    for matrix in matrix_list:
-        (row_count, column_count) = np.shape(matrix)
-        result_matrix[
-            row_shift : row_shift + row_count,
-            column_shift : column_shift + column_count,
-        ] = matrix
-        row_shift += row_count
-        column_shift += column_count
-
-    return result_matrix
-
-
 def is_square_2d_array(matrix: Iterable) -> bool:
     if np.ndim(matrix) != 2:
         return False
@@ -153,36 +131,50 @@ def cholesky_update(
     sign: Literal["+", "-"],
 ) -> Float64Matrix:
     """
-    Perform cholesky update.
-    Returns the upper triangular Cholesky factor of A + x*x', where x is a column vector of appropriate length
-    cholesky_update uses only the diagonal and upper triangle of r.
-    Copied from https://stackoverflow.com/questions/8636518/dense-cholesky-update-in-python
-    :param a: is the original Cholesky factorization of A.
-    :param x: is a column vector of appropriate length.
-    :param sign: perform update: A + x*x' when sign is '+' or downgrade: A - x*x' when sign is '-'.
-    :return: upper triangular Cholesky factor of
+    Update or downdate an upper triangular Cholesky factor.
+
+    :param a: upper triangular factor of shape (n, n), where A = a.T @ a.
+    :param x: matrix of shape (n, k), with one update vector per column.
+    :param sign: '+' for an update or '-' for a downdate.
+    :return: upper triangular Cholesky factor of A + x @ x.T or A - x @ x.T,
+        respectively.
+    :raises ValueError: if sign is invalid.
+    :raises numpy.linalg.LinAlgError: if a pivot is zero or the downdated
+        matrix is not positive definite.
     """
-    p = np.size(x)
-    result = a.copy()
-    x = x.T
+    match sign:
+        case "+":
+            multiplier = 1
+        case "-":
+            multiplier = -1
+        case _:
+            raise ValueError(f"Unknown sign {sign!r}")
 
-    for k in range(p):
-        if sign == "+":
-            r = np.sqrt(result[k, k] ** 2 + x[k] ** 2)
-        elif sign == "-":
-            r = np.sqrt(result[k, k] ** 2 - x[k] ** 2)
-        else:
-            raise Exception(f"unknown value of sign. sign = {sign}")
+    upper = a.copy()
+    for j in range(x.shape[1]):
+        remaining = x[:, j]
+        for k in range(upper.shape[0]):
+            diagonal = upper[k, k]
+            if diagonal == 0:
+                raise np.linalg.LinAlgError("Zero Cholesky pivot")
 
-        c = r / result[k, k]
-        s = x[k] / result[k, k]
-        result[k, k] = r
-        if sign == "+":
-            result[k, k + 1 : p] = (result[k, k + 1 : p] + s * x[k + 1 : p]) / c
-        elif sign == "-":
-            result[k, k + 1 : p] = (result[k, k + 1 : p] - s * x[k + 1 : p]) / c
-        x[k + 1 : p] = c * x[k + 1 : p] - s * result[k, k + 1 : p]
-    return result
+            value = remaining[0]
+            s = value / diagonal
+            if sign == "+":
+                pivot = np.hypot(diagonal, value)
+            else:
+                if abs(s) >= 1:
+                    raise np.linalg.LinAlgError("Downdate is not positive definite")
+                pivot = abs(diagonal) * np.sqrt((1 - s) * (1 + s))
+
+            c = pivot / diagonal
+            upper[k, k] = pivot
+            row = upper[k, k + 1 :]
+            tail = remaining[1:]
+            row[:] = (row + multiplier * s * tail) / c
+            remaining = c * tail - s * row
+
+    return upper
 
 
 def cartesian_product(*arrays) -> Float64Matrix:
