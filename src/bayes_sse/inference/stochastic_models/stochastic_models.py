@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from typing import Any, cast
 
 import numpy as np
+from scipy.linalg import block_diag
 from scipy.stats import gamma, multivariate_normal
 
 import bayes_sse.core.covariance_utils as cov_utils
@@ -245,9 +246,7 @@ class ComboGaussian(StochasticModel):
         if not all(source.covariance_type == cov_type for source in sources):
             raise Exception("all source items must have same covariance_type")
 
-        cov = matrix_utils.put_matrices_into_zero_matrix_one_by_one(
-            dimension, list(map(lambda x: x.covariance, sources))
-        )
+        cov = block_diag(*(source.covariance for source in sources))
         self._dimension = dimension
         self._covariance_type = sources[0].covariance_type
         self._mean = np.atleast_1d(

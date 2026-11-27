@@ -1,6 +1,7 @@
 from .filters import (
     EKF,
     KF,
+    SRUKF,
     UKF,
     KalmanFilterResult,
     KalmanFilterState,
@@ -42,6 +43,7 @@ from .typing import (
 __all__ = [
     "EKF",
     "KF",
+    "SRUKF",
     "UKF",
     "ControlVector",
     "CovarianceFactor",
